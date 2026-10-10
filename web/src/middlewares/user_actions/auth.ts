@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import User from "../../models/userModel";
+import jwt from "jsonwebtoken";
+import User, { IUser } from "../../models/userModel";
 import ErrorHandler from "../../utils/errorHandler";
+import { verifyAuthToken } from "../../utils/jwt";
 import asyncErrorHandler from "../helpers/asyncErrorHandler";
 
 /**
@@ -9,35 +10,35 @@ import asyncErrorHandler from "../helpers/asyncErrorHandler";
  * (Ideally place this in a global typings file)
  */
 export interface AuthenticatedRequest extends Request {
-  user?: any; // replace `any` with IUser if you have a User interface
-}
-
-interface DecodedToken extends JwtPayload {
-  id: string;
+  user?: IUser;
 }
 
 // Check if user is authenticated
 export const isAuthenticatedUser = asyncErrorHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const { token } = req.cookies;
+    const token = req.cookies?.token;
 
     if (!token) {
       return next(new ErrorHandler("Please Login to Access", 401));
     }
 
-    const decodedData = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as DecodedToken;
+    try {
+      const decodedData = verifyAuthToken(token);
+      const user = await User.findById(decodedData.user_id);
 
-    const user = await User.findById(decodedData.id);
+      if (!user) {
+        return next(new ErrorHandler("Please Login to Access", 401));
+      }
 
-    if (!user) {
-      return next(new ErrorHandler("User not found", 404));
+      req.user = user;
+      return next();
+    } catch (error) {
+      if (error instanceof jwt.JsonWebTokenError) {
+        return next(new ErrorHandler("Invalid or expired token", 401));
+      }
+
+      return next(error);
     }
-
-    req.user = user;
-    next();
   }
 );
 

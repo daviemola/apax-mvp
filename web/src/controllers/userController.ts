@@ -7,7 +7,7 @@ import { createRequire } from "module";
 
 import User, { IUser } from "../models/userModel";
 import asyncErrorHandler from "../middlewares/helpers/asyncErrorHandler";
-import sendToken from "../utils/sendToken";
+import sendToken, { authCookieOptions } from "../utils/sendToken";
 import ErrorHandler from "../utils/errorHandler";
 import sendEmail from "../utils/sendEmail";
 
@@ -74,10 +74,7 @@ export const loginUser = asyncErrorHandler(
 // ================= LOGOUT =================
 export const logoutUser = asyncErrorHandler(
   async (req: Request, res: Response) => {
-    res.cookie("token", null, {
-      expires: new Date(Date.now()),
-      httpOnly: true,
-    });
+    res.clearCookie("token", authCookieOptions);
 
     res.status(200).json({
       success: true,

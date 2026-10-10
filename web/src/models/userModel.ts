@@ -1,8 +1,8 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { signAuthToken } from "../utils/jwt";
 
 /**
  * User interface
@@ -89,6 +89,13 @@ userSchema.methods.comparePassword = async function (
   enteredPassword: string
 ): Promise<boolean> {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.getJWTToken = function (this: IUser): string {
+  return signAuthToken({
+    user_id: this._id.toString(),
+    email: this.email,
+  });
 };
 
 /**

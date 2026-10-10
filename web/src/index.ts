@@ -33,6 +33,7 @@ getJWTSecret();
 
 const app = express();
 const apiRoutes = express.Router();
+const dashboardApiRoutes = express.Router();
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const startedAt = Date.now();
@@ -84,6 +85,7 @@ const health = (_req: Request, res: Response) => {
 
 app.get(["/", "/health", "/_health", "/__health"], health);
 app.use(apiRoutes);
+app.use("/api", dashboardApiRoutes);
 
 let databaseReady = false;
 
@@ -200,6 +202,19 @@ if (routesEnabled) {
       console.error("[routes] failed to load API routes:", error);
     });
 }
+
+void import("./routes/holdings")
+  .then(({ default: holdingsRoutes }) => {
+    dashboardApiRoutes.use(
+      "/holdings",
+      requireDatabase,
+      holdingsRoutes
+    );
+    console.log("[routes] holdings route loaded at /api/holdings");
+  })
+  .catch((error: unknown) => {
+    console.error("[routes] failed to load holdings route:", error);
+  });
 
 if (databaseEnabled) {
   void import("./config/database")

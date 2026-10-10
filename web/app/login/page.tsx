@@ -20,26 +20,22 @@ export default function LoginPage() {
   const [vaultOpening, setVaultOpening] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // setIsLoading(true)
-    const res = await loginApi({ email, password })
-    console.log(res)
-    //NEED TO CLEAN UP ONCE ALL DONE, didn't get time due to mongodb connection issue.
-    // Simulate authentication delay
-    // await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsLoading(true)
+    setLoginError('')
 
-    // Trigger vault door animation
-    // setVaultOpening(true)
-
-    // Navigate after animation
-    // await new Promise(resolve => setTimeout(resolve, 1000))
-    // router.push('/dashboard')
-    if(res.data) {
-      router.push('/dashbaord')
-    } else {
-      alert('Something went wrong')
+    try {
+      const res = await loginApi({ email, password })
+      if (res.success) {
+        router.push('/dashboard')
+      } else {
+        setLoginError(res.message || 'Unable to sign in. Please try again.')
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -269,6 +265,11 @@ export default function LoginPage() {
                     </>
                   )}
                 </Button>
+                {loginError && (
+                  <p role="alert" className="text-sm text-red-400">
+                    {loginError}
+                  </p>
+                )}
               </form>
             </TabsContent>
           </Tabs>

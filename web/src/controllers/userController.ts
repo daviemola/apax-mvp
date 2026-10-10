@@ -10,6 +10,7 @@ import asyncErrorHandler from "../middlewares/helpers/asyncErrorHandler";
 import sendToken, { authCookieOptions } from "../utils/sendToken";
 import ErrorHandler from "../utils/errorHandler";
 import sendEmail from "../utils/sendEmail";
+import loginController from "./loginController";
 
 const require = createRequire(import.meta.url);
 
@@ -47,29 +48,7 @@ export const registerUser = asyncErrorHandler(
   }
 );
 
-// ================= LOGIN =================
-export const loginUser = asyncErrorHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return next(new ErrorHandler("Please Enter Email And Password", 400));
-    }
-
-    const user = await User.findOne({ email }).select("+password");
-
-    if (!user) {
-      return next(new ErrorHandler("Invalid Email or Password", 401));
-    }
-
-    const isPasswordMatched = await user.comparePassword(password);
-
-    if (!isPasswordMatched) {
-      return next(new ErrorHandler("Invalid Email or Password", 401));
-    }
-
-    return sendToken(user, 200, res);
-  }
-);
+export const loginUser = loginController;
 
 // ================= LOGOUT =================
 export const logoutUser = asyncErrorHandler(
